@@ -194,7 +194,7 @@ void startSong()
 //resets everything for a new song, and uploads the song if there have been messages entered
 void endSong()
 {
-    if(messageCount > 0) {
+    if(messageCount > 10) {
         uploadSong();
     }
     
