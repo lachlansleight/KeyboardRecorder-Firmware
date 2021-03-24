@@ -11,7 +11,7 @@ struct Message {
 #include <HTTPClient.h>
 const char* ssid     = "WhatFight4";
 const char* password = "dumplingsatnoon!";
-String server = "http://192.168.20.12:3000"; //for development
+String server = "https://midirecorder.vercel.app"; //for development
 String path = "/api/upload";
 
 #include <MIDI.h>
