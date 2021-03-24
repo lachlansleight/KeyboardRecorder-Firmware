@@ -1,4 +1,4 @@
-# KeyboardRecorder Server
+# KeyboardRecorder Firmware
 
 This is the firmware for a device that I'm building that automatically records everything I play on my piano. The repository for the server and frontend website can be found [here](https://github.com/lachlansleight/KeyboardRecorder-Server)
 
