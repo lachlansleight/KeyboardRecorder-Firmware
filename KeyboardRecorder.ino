@@ -1,3 +1,5 @@
+#define DEBUG_MODE
+
 struct Message {
     byte onOffPitch;
     byte isPedalVelocity;
@@ -24,14 +26,16 @@ unsigned long lastNoteTime = 0;
 bool runningSong = false;
 
 uint8_t* messageBuffer;
-//byte messageBuffer[20000];
 unsigned int messageIndex = 0;
 unsigned int messageCount = 0;
 
 
 //CONFIG
-//long timeoutTime = 60000; //60 seconds silence = end song
-long timeoutTime = 5000; //5 seconds silence = end song (!!for testing!!)
+#ifdef DEBUG_MODE
+    long timeoutTime = 5000; //5 seconds silence = end song (!!for testing!!)
+#else
+    long timeoutTime = 60000; //60 seconds silence = end song
+#endif
 
 #define LED_PIN_R 18
 #define LED_PIN_G 19
@@ -126,8 +130,10 @@ void setup() {
     delay(10);
 
     //connect to WiFi
+    #ifdef DEBUG_MODE
     Serial.print("Connecting to ");
     Serial.println(ssid);
+    #endif
     WiFi.begin(ssid, password);
 
     boolean waitingA = false;
@@ -139,13 +145,18 @@ void setup() {
         }
         waitingA = !waitingA;
         delay(500);
+        #ifdef DEBUG_MODE
         Serial.print(".");
+        #endif
     }
     wifiSuccessFlash();
+
+    #ifdef DEBUG_MODE
     Serial.println("WiFi connected!");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
     Serial.println("");
+    #endif
 
     //WIFI is now connected, we can start listening for MIDI
     
@@ -199,9 +210,11 @@ Message createMessage(bool onOff, byte pitch, byte velocity, bool isPedal, long 
         fourthByte,
         fifthByte
     };
+    #ifdef DEBUG_MODE
     printMessage(newMessage);
     Serial.println("\t" + String(onOff) + "\t" + String(pitch) + "\t" + String(velocity) + "\t    " + String(isPedal) + "\t" + String(songMillis));
     Serial.println("");
+    #endif
     return newMessage;
 }
 
@@ -245,8 +258,10 @@ void uploadSong()
 {
     if(WiFi.status()== WL_CONNECTED){
         HTTPClient http;
-        
+
+        #ifdef DEBUG_MODE
         Serial.println("Making request to " + (server + path));
+        #endif
         http.begin((server + path).c_str());
         
         //data
@@ -254,13 +269,18 @@ void uploadSong()
         int httpResponseCode = http.POST(messageBuffer, messageCount * 5);
         
         if (httpResponseCode>0) {
+            #ifdef DEBUG_MODE
             String payload = http.getString();
             Serial.print("HTTP Response: ");
             Serial.print(httpResponseCode);
             Serial.print(" - ");
             Serial.println(payload);
+
+            WifiSuccessFlash();
+            #endif
         }
         else {
+            #ifdef DEBUG_MODE
             if(httpResponseCode == -1) Serial.println("Error - Connection_Refused (Code -1)");
             else if(httpResponseCode == -2) Serial.println("Error - Send Header Failed (Code -2)");
             else if(httpResponseCode == -3) Serial.println("Error - Send Payload Failed (Code -3)");
@@ -273,6 +293,7 @@ void uploadSong()
             else if(httpResponseCode == -10) Serial.println("Error - Stream Write (Code -10)");
             else if(httpResponseCode == -11) Serial.println("Error - Read Timeout (Code -11)");
             else Serial.println("Error - Unexpected error code " + String(httpResponseCode));
+            #endif
 
             //flash LED white/red, then fade
             errorFlash();
@@ -280,13 +301,18 @@ void uploadSong()
         // Free resources
         http.end();
     } else {
+        #ifdef DEBUG_MODE
         Serial.println("WiFi Disconnected");
+        #endif
+        errorFlash();
     }
 }
 
 void startSong()
 {
+    #ifdef DEBUG_MODE
     Serial.println("====================STARTING SONG===================");
+    #endif
     songStartTime = millis();
     runningSong = true;
 }
@@ -297,8 +323,10 @@ void endSong()
     if(messageCount > 10) {
         uploadSong();
     }
-    
+
+    #ifdef DEBUG_MODE
     Serial.println("====================ENDING SONG===================");
+    #endif
     messageIndex = 0;
     messageCount = 0;
     runningSong = false;
