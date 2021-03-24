@@ -23,7 +23,8 @@ unsigned long songTime = 0;
 unsigned long lastNoteTime = 0;
 bool runningSong = false;
 
-byte messageBuffer[20000];
+uint8_t* messageBuffer;
+//byte messageBuffer[20000];
 unsigned int messageIndex = 0;
 unsigned int messageCount = 0;
 
@@ -32,7 +33,95 @@ unsigned int messageCount = 0;
 //long timeoutTime = 60000; //60 seconds silence = end song
 long timeoutTime = 5000; //5 seconds silence = end song (!!for testing!!)
 
+#define LED_PIN_R 18
+#define LED_PIN_G 19
+#define LED_PIN_B 21
+
+
+
+void setLedColor(byte r, byte g, byte b) {
+    ledcWrite(0, r);
+    ledcWrite(1, g);
+    ledcWrite(2, b);
+}
+
+void errorFlash()
+{
+    //flash LED white/red, then fade
+    
+    byte last = 255;
+    for(byte i = 255; i >= 0; i--) {
+        if(i > last) break;
+        last = i;
+        
+        setLedColor(255, i, i);
+        delay(1);
+    }
+    last = 0;
+    for(byte i = 0; i <= 255; i++) {
+        if(i < last) break;
+        last = i;
+        
+        setLedColor(255, i, i);
+        delay(1);
+    }
+    last = 255;
+    for(byte i = 255; i >= 0; i--) {
+        if(i > last) break;
+        last = i;
+        
+        setLedColor(255, i, i);
+        delay(1);
+    }
+    delay(500);
+    last = 255;
+    for(byte i = 255; i >= 0; i--) {
+        if(i > last) break;
+        last = i;
+        
+        setLedColor(i, 0, 0);
+        delay(5);
+    }
+
+    setLedColor(0, 0, 0);
+}
+
+void wifiSuccessFlash()
+{
+    byte last = 255;
+    for(byte i = 255; i >= 0; i--) {
+        if(i > last) break;
+        last = i;
+        
+        setLedColor(i, i * 0.5 + 128, 255);
+        delay(1);
+    }
+    last = 255;
+    for(byte i = 255; i >= 0; i--) {
+        if(i > last) break;
+        last = i;
+        
+        setLedColor(0, i * 0.5, i);
+        delay(5);
+    }
+
+    setLedColor(0, 0, 0);
+}
+
 void setup() {
+    //allocate this memory first before anything else can break into my beautiful, pristine chunk
+    messageBuffer = (uint8_t*)calloc(100000, sizeof(byte));
+    
+    //Set up LED output
+    ledcSetup(0, 5000, 8);
+    ledcSetup(1, 5000, 8);
+    ledcSetup(2, 5000, 8);
+    
+    ledcAttachPin(18, 0);
+    ledcAttachPin(19, 1);
+    ledcAttachPin(21, 2);
+
+    
     Serial.begin(38400);
     delay(10);
 
@@ -41,10 +130,18 @@ void setup() {
     Serial.println(ssid);
     WiFi.begin(ssid, password);
 
+    boolean waitingA = false;
     while (WiFi.status() != WL_CONNECTED) {
-        delay(100);
+        if(waitingA) {
+            setLedColor(0, 0, 0);
+        } else {
+            setLedColor(0, 25, 50);
+        }
+        waitingA = !waitingA;
+        delay(500);
         Serial.print(".");
     }
+    wifiSuccessFlash();
     Serial.println("WiFi connected!");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
@@ -176,6 +273,9 @@ void uploadSong()
             else if(httpResponseCode == -10) Serial.println("Error - Stream Write (Code -10)");
             else if(httpResponseCode == -11) Serial.println("Error - Read Timeout (Code -11)");
             else Serial.println("Error - Unexpected error code " + String(httpResponseCode));
+
+            //flash LED white/red, then fade
+            errorFlash();
         }
         // Free resources
         http.end();
