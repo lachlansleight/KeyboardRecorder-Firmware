@@ -1,4 +1,4 @@
-#define DEBUG_MODE
+//#define DEBUG_MODE
 
 struct Message {
     byte onOffPitch;
@@ -37,9 +37,9 @@ unsigned int messageCount = 0;
     long timeoutTime = 60000; //60 seconds silence = end song
 #endif
 
-#define LED_PIN_R 18
-#define LED_PIN_G 19
-#define LED_PIN_B 21
+#define PIN_LED_R 25
+#define PIN_LED_G 24
+#define PIN_LED_B 23
 
 
 
@@ -121,9 +121,9 @@ void setup() {
     ledcSetup(1, 5000, 8);
     ledcSetup(2, 5000, 8);
     
-    ledcAttachPin(18, 0);
-    ledcAttachPin(19, 1);
-    ledcAttachPin(21, 2);
+    ledcAttachPin(PIN_LED_R, 0);
+    ledcAttachPin(PIN_LED_G, 1);
+    ledcAttachPin(PIN_LED_B, 2);
 
     
     Serial.begin(38400);
@@ -276,7 +276,7 @@ void uploadSong()
             Serial.print(" - ");
             Serial.println(payload);
 
-            WifiSuccessFlash();
+            wifiSuccessFlash();
             #endif
         }
         else {
