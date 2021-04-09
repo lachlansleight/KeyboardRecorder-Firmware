@@ -11,10 +11,13 @@ struct Message {
 
 #include <WiFi.h>
 #include <HTTPClient.h>
+//Replace these with your WiFi credentials (2.4GHz only)
+//Also...please don't come to my house and hack my WiFi with these!
 const char* ssid     = "WhatFight4";
 const char* password = "dumplingsatnoon!";
-String server = "https://midirecorder.vercel.app"; //for development
+String server = "https://midirecorder.vercel.app";
 String path = "/api/upload";
+String mac = WiFi.macAddress();
 
 #include <MIDI.h>
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial2, MIDI);
@@ -132,7 +135,9 @@ void setup() {
     //connect to WiFi
     #ifdef DEBUG_MODE
     Serial.print("Connecting to ");
-    Serial.println(ssid);
+    Serial.print(ssid);
+    Serial.print(" with MAC address ");
+    Serial.println(mac);    
     #endif
     WiFi.begin(ssid, password);
 
@@ -266,6 +271,7 @@ void uploadSong()
         
         //data
         http.addHeader("Content-Type", "application/octet-stream");
+        http.addHeader("Authorization", "Basic " + mac);
         int httpResponseCode = http.POST(messageBuffer, messageCount * 5);
         
         if (httpResponseCode>0) {
