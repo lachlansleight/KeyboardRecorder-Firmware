@@ -277,15 +277,29 @@ void uploadSong()
         int httpResponseCode = http.POST(messageBuffer, messageCount * 5);
         
         if (httpResponseCode>0) {
-            #ifdef DEBUG_MODE
-            String payload = http.getString();
-            Serial.print("HTTP Response: ");
-            Serial.print(httpResponseCode);
-            Serial.print(" - ");
-            Serial.println(payload);
-
-            wifiSuccessFlash();
-            #endif
+            if(httpResponseCode >= 200 && httpResponseCode <= 299) {
+                #ifdef DEBUG_MODE
+                String payload = http.getString();
+                Serial.print("HTTP Response: ");
+                Serial.print(httpResponseCode);
+                Serial.print(" - ");
+                Serial.println(payload);
+    
+                wifiSuccessFlash();
+                #endif
+            } else {
+                if(httpResponseCode >= 500) {
+                    #ifdef DEBUG_MODE
+                    Serial.println("Error - server error " + String(httpResponseCode));
+                    #endif
+                    errorFlash();
+                } else {
+                    #ifdef DEBUG_MODE
+                    Serial.println("Error - request error " + String(httpResponseCode));
+                    #endif
+                    errorFlash();
+                }
+            }
         }
         else {
             #ifdef DEBUG_MODE
