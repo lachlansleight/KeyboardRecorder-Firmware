@@ -225,10 +225,12 @@ Message createMessage(bool onOff, byte pitch, byte velocity, bool isPedal, long 
 
 //creates a message from the basic data and adds the five resulting bytes to the buffer
 //also starts a new song if necessary, and updates the last played note time for calculating timeout
-void addMessage(bool onOff, byte pitch, byte velocity, bool isPedal, long songMillis) {
+void addMessage(bool onOff, byte pitch, byte velocity, bool isPedal) {
     if(!runningSong) startSong();
+
+    unsigned long songTime = (unsigned long)(millis() - songStartTime);
     
-    Message newMessage = createMessage(onOff, pitch, velocity, isPedal, songMillis);
+    Message newMessage = createMessage(onOff, pitch, velocity, isPedal, songTime);
     messageBuffer[messageIndex] = newMessage.onOffPitch;
     messageIndex++;
     messageBuffer[messageIndex] = newMessage.isPedalVelocity;
@@ -241,7 +243,7 @@ void addMessage(bool onOff, byte pitch, byte velocity, bool isPedal, long songMi
     messageIndex++;
     
     messageCount++;
-    lastNoteTime = songMillis;
+    lastNoteTime = songTime;
 }
 
 void printMessage(Message message) {
@@ -345,13 +347,13 @@ void endSong()
 void handleNoteOn(byte channel, byte pitch, byte velocity)
 {
     //Serial.println("ON\t" + String(channel) + "\t" + String(pitch) + "\t" + String(velocity));
-    addMessage(true, pitch, velocity, false, songTime);
+    addMessage(true, pitch, velocity, false);
 }
 
 void handleNoteOff(byte channel, byte pitch, byte velocity)
 {
     //Serial.println("OFF\t" + String(channel) + "\t" + String(pitch) + "\t" + String(velocity));
-    addMessage(false, pitch, velocity, false, songTime);
+    addMessage(false, pitch, velocity, false);
 }
 
 void handleControlChange(byte channel, byte number, byte value)
@@ -359,8 +361,8 @@ void handleControlChange(byte channel, byte number, byte value)
     //Serial.println("CC\t" + String(channel) + "\t" + String(number) + "\t" + String(value));
     if(number == 64) {
         //dampen pedal
-        if(value == 127) addMessage(true, 0, 0, true, songTime);
-        else addMessage(true, 0, 0, false, songTime);
+        if(value == 127) addMessage(true, 0, 0, true);
+        else addMessage(true, 0, 0, false);
     } else if(number == 67) {
         //sost pedal - could use for some kind of input?
         //I'm thinking a hold of three seconds on sost should discard the current song without uploading
